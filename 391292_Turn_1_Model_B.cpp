@@ -1,18 +1,16 @@
 #include <gtest/gtest.h>
 
-// Example template function you want to test
-template<typename T>
+// Sample template function
+template <typename T>
 T add(T a, T b) {
     return a + b;
 }
 
-// Test case for the 'add' function
-TEST(AdditionTest, HandlesIntegers) {
-    EXPECT_EQ(add(1, 1), 2);
+// Test case for the template function
+TEST(AdditionTest, Integers) {
+    EXPECT_EQ(add<int>(1, 2), 3);
 }
 
-TEST(AdditionTest, HandlesDoubles) {
-    EXPECT_DOUBLE_EQ(add(1.5, 1.5), 3.0);
+TEST(AdditionTest, Floats) {
+    EXPECT_FLOAT_EQ(add<float>(1.5, 2.5), 4.0);
 }
-
-// Add more test cases as needed
