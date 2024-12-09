@@ -1,15 +1,27 @@
+// template_class.h
+template <typename T>
+class TemplateClass {
+public:
+    T square(T x) {
+        return x * x;
+    }
+};
+
+// template_class.cpp
+#include "template_class.h"
+
+// template_tests.cpp
+#include "template_class.h"
 #include <gtest/gtest.h>
-#include "template_class.hpp"  // Include your class
 
-TEST(TemplateClassTest, TypeSafety) {
-    // Test cases involving your template class
-    TemplateClass<int> tc_int;
-    tc_int.setValue(42);
-    EXPECT_EQ(tc_int.value(), 42);
+TEST(TemplateClassTest, SquareInt) {
+    TemplateClass<int> intClass;
+    EXPECT_EQ(intClass.square(3), 9);
+}
 
-    TemplateClass<double> tc_double;
-    tc_double.setValue(3.14);
-    EXPECT_EQ(tc_double.value(), 3.14);
+TEST(TemplateClassTest, SquareDouble) {
+    TemplateClass<double> doubleClass;
+    EXPECT_NEAR(doubleClass.square(3.0), 9.0, 0.0001);
 }
 
 int main(int argc, char** argv) {
