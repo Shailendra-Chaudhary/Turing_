@@ -1,38 +1,22 @@
-// feature.h
-
-#pragma once
-
-#ifdef FEATURE_FLAG
-inline std::string getFeatureValue() {
-    return "Feature enabled";
-}
-#else
-inline std::string getFeatureValue() {
-    return "Feature disabled";
-}
-#endif
-// test_feature.cpp
-
-#include <gtest/gtest.h>
-
-// Include the feature header multiple times with different flags.
-#undef FEATURE_FLAG
-
+#include "gtest/gtest.h"
 #include "feature.h"
 
-TEST(FeatureTest, TestFeatureDisabled) {
-    EXPECT_EQ(getFeatureValue(), "Feature disabled");
+// Test when FEATURE_X_ENABLED is defined
+TEST(FeatureTest, FeatureXEnabled) {
+    // Simulate FEATURE_X_ENABLED being defined
+    #define FEATURE_X_ENABLED
+    EXPECT_EQ(getFeatureValue(), 42);
+    #undef FEATURE_X_ENABLED
 }
 
-#define FEATURE_FLAG 1
-#include "feature.h"
-
-TEST(FeatureTest, TestFeatureEnabled) {
-    EXPECT_EQ(getFeatureValue(), "Feature enabled");
+// Test when FEATURE_X_ENABLED is not defined
+TEST(FeatureTest, FeatureXDisabled) {
+    // Ensure FEATURE_X_ENABLED is not defined
+    #undef FEATURE_X_ENABLED
+    EXPECT_EQ(getFeatureValue(), 0);
 }
 
-#undef FEATURE_FLAG
-
+// Main function to run the tests
 int main(int argc, char **argv) {
     ::testing::InitGoogleTest(&argc, argv);
     return RUN_ALL_TESTS();
