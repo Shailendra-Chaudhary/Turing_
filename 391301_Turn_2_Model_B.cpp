@@ -1,64 +1,61 @@
 #include <iostream>
 #include <vector>
-#include <string>
-#include <functional>
-#include <cmath>
-#include <bitset>
+#include <chrono>
 
-class CacheAwareBloomFilter {
-public:
-    CacheAwareBloomFilter(size_t capacity, double falsePositiveRate) {
-        if (falsePositiveRate <= 0 || falsePositiveRate >= 1) {
-            throw std::invalid_argument("False positive rate must be between 0 and 1");
-        }
+using Matrix = std::vector<std::vector<int>>;
 
-        // Number of bits in the Bloom filter
-        m = -static_cast<size_t>(capacity * std::log(falsePositiveRate) / (std::log(2) * std::log(2)));
+Matrix traditionalMatrixMultiplication(const Matrix& A, const Matrix& B) {
+    size_t n = A.size();
+    Matrix C(n, std::vector<int>(n, 0));
 
-        // Number of hash functions
-        k = static_cast<size_t>(m / capacity);
-        if (k < 1) k = 1;
-
-        // Align the bit array with cache lines
-        size_t cacheLineSize = 64; // Typical cache line size
-        size_t bitArraySize = (m + cacheLineSize * 8 - 1) / (cacheLineSize * 8) * cacheLineSize * 8;
-        bitArray.resize(bitArraySize, false);
-    }
-
-    void add(const std::string& item) {
-        for (size_t i = 0; i < k; ++i) {
-            bitArray[hashFunction(item, i) % m] = true;
-        }
-    }
-
-    bool contains(const std::string& item) const {
-        for (size_t i = 0; i < k; ++i) {
-            if (!bitArray[hashFunction(item, i) % m]) {
-                return false;
+    for (size_t i = 0; i < n; ++i) {
+        for (size_t j = 0; j < n; ++j) {
+            for (size_t k = 0; k < n; ++k) {
+                C[i][j] += A[i][k] * B[k][j];
             }
         }
-        return true;
     }
 
-private:
-    size_t m; // Number of bits in the Bloom filter
-    size_t k; // Number of hash functions
-    std::vector<bool> bitArray; // The bit array
+    return C;
+}
+Matrix cacheOptimizedMatrixMultiplication(const Matrix& A, const Matrix& B, size_t blockSize) {
+    size_t n = A.size();
+    Matrix C(n, std::vector<int>(n, 0));
 
-    // A simple hash function
-    size_t hashFunction(const std::string& item, size_t i) const {
-        return std::hash<std::string>{}(item) + i * 0x9e3779b1;
+    for (size_t ii = 0; ii < n; ii += blockSize) {
+        for (size_t jj = 0; jj < n; jj += blockSize) {
+            for (size_t kk = 0; kk < n; kk += blockSize) {
+                for (size_t i = ii; i < std::min(ii + blockSize, n); ++i) {
+                    for (size_t j = jj; j < std::min(jj + blockSize, n); ++j) {
+                        for (size_t k = kk; k < std::min(kk + blockSize, n); ++k) {
+                            C[i][j] += A[i][k] * B[k][j];
+                        }
+                    }
+                }
+            }
+        }
     }
-};
 
+    return C;
+}
 int main() {
-    CacheAwareBloomFilter bloomFilter(10000, 0.01);
-    bloomFilter.add("apple");
-    bloomFilter.add("banana");
+    const size_t n = 512; // Example size
+    const size_t blockSize = 16; // Block size chosen to fit cache lines
 
-    std::cout << "Contains 'apple': " << bloomFilter.contains("apple") << std::endl;
-    std::cout << "Contains 'banana': " << bloomFilter.contains("banana") << std::endl;
-    std::cout << "Contains 'orange': " << bloomFilter.contains("orange") << std::endl;
+    Matrix A(n, std::vector<int>(n, 1));
+    Matrix B(n, std::vector<int>(n, 1));
+
+    auto start = std::chrono::high_resolution_clock::now();
+    Matrix C1 = traditionalMatrixMultiplication(A, B);
+    auto end = std::chrono::high_resolution_clock::now();
+    std::chrono::duration<double> traditionalDuration = end - start;
+    std::cout << "Traditional Duration: " << traditionalDuration.count() << "s\n";
+
+    start = std::chrono::high_resolution_clock::now();
+    Matrix C2 = cacheOptimizedMatrixMultiplication(A, B, blockSize);
+    end = std::chrono::high_resolution_clock::now();
+    std::chrono::duration<double> optimizedDuration = end - start;
+    std::cout << "Optimized Duration: " << optimizedDuration.count() << "s\n";
 
     return 0;
 }
