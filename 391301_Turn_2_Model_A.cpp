@@ -1,61 +1,42 @@
 #include <iostream>
 #include <vector>
-#include <unordered_map>
-#include <string>
-#include <cstdint>
-#include <random>
-#include <algorithm>
+#include <chrono>
+#include <cstdlib>
 
-class StandardBloomFilter {
-public:
-    StandardBloomFilter(size_t capacity, double falsePositiveRate) {
-        if (falsePositiveRate <= 0 || falsePositiveRate >= 1) {
-            throw std::invalid_argument("False positive rate must be between 0 and 1");
-        }
-
-        m = -static_cast<size_t>(capacity * std::log(falsePositiveRate) / std::log(2.0 * std::log(2.0)));
-
-        k = static_cast<size_t>(m / capacity);
-        if (k < 1) k = 1;
-
-        // Initialize the bit array
-        bitArray.resize(m, false);
-    }
-
-    void add(const std::string& item) {
-        for (size_t i = 0; i < k; ++i) {
-            bitArray[hashFunction(item, i)] = true;
+// Helper function to generate a random matrix
+void generateRandomMatrix(std::vector<std::vector<double>>& matrix, size_t n) {
+    for (size_t i = 0; i < n; ++i) {
+        matrix[i].resize(n);
+        for (size_t j = 0; j < n; ++j) {
+            matrix[i][j] = rand() / (double)RAND_MAX;
         }
     }
+}
 
-    bool contains(const std::string& item) const {
-        for (size_t i = 0; i < k; ++i) {
-            if (!bitArray[hashFunction(item, i)]) {
-                return false;
-            }
+void transposeNaive(std::vector<std::vector<double>>& matrix) {
+    size_t n = matrix.size();
+    for (size_t i = 0; i < n; ++i) {
+        for (size_t j = i + 1; j < n; ++j) {
+            double temp = matrix[i][j];
+            matrix[i][j] = matrix[j][i];
+            matrix[j][i] = temp;
         }
-        return true;
     }
+}
 
-private:
-    size_t m; // Number of bits in the Bloom filter
-    size_t k; // Number of hash functions
-    std::vector<bool> bitArray; // The bit array
+int main() {
+    const size_t n = 2048; // Change to a larger size to see the effect more clearly
 
-    // A simple hash function
-    size_t hashFunction(const std::string& item, size_t i) const {
-        using namespace std;
-        static const auto seed = default_random_engine{chrono::high_resolution_clock::now().time_since_epoch().count()};
-        auto hash = hasher<string>{};
+    std::vector<std::vector<double>> matrix;
+    generateRandomMatrix(matrix, n);
 
-        auto randomize = [&seed, i](size_t h) {
-            random_device rd;
-            mt19937 gen(rd());
-            uniform_int_distribution<> dis(0, m - 1);
-            h = dis(gen) ^ h;
-            return h;
-        };
+    // Measure naive transpose time
+    auto start = std::chrono::high_resolution_clock::now();
+    transposeNaive(matrix);
+    auto end = std::chrono::high_resolution_clock::now();
+    auto duration = std::chrono::duration_cast<std::chrono::milliseconds>(end - start);
 
-        return randomize(hash(item) + i);
-    }
-};
+    std::cout << "Naive Transpose Time: " << duration.count() << " ms" << std::endl;
+
+    return 0;
+}
