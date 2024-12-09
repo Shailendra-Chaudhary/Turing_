@@ -1,44 +1,43 @@
-// feature_toggle.h
-#ifndef FEATURE_TOGGLE_H
-#define FEATURE_TOGGLE_H
+#include <gtest/gtest.h>
+#include "feature.h" // Replace with your header file
 
-#include <string>
+// Helper function to simulate compiler conditions
+void TestWithCompilerMacro(bool gcc, bool msvc, const std::string& expectedOutput) {
+    // Simulate GCC macro
+    #ifdef __GNUC__
+    #undef __GNUC__
+    #endif
+    #if gcc
+    #define __GNUC__
+    #endif
 
-std::string processData(const std::string& input);
+    // Simulate MSVC macro
+    #ifdef _MSC_VER
+    #undef _MSC_VER
+    #endif
+    #if msvc
+    #define _MSC_VER
+    #endif
 
-#endif  // FEATURE_TOGGLE_H
-// feature_toggle.cpp
-#include "feature_toggle.h"
+    Feature feature;
+    std::ostringstream oss;
+    std::streambuf* orig = std::cout.rdbuf(oss.rdbuf());
 
-#ifdef ENABLE_FEATURE
-std::string processData(const std::string& input) {
-    return "Processed with Feature Enabled: " + input;
-}
-#else
-std::string processData(const std::string& input) {
-    return "Processed without Feature: " + input;
-}
-#endif
-// feature_toggle_test.cpp
-#include "gtest/gtest.h"
-#include "feature_toggle.h"
+    feature.doSomething();
+    std::cout.rdbuf(orig);
 
-#define TEST_MACRO_ENABLED \
-    do {                    \
-        _Pragma("push_macro(\"ENABLE_FEATURE\")") \
-        _Pragma("define ENABLE_FEATURE 1") \
-        _Pragma("pop_macro(\"ENABLE_FEATURE\")") \
-    } while (0)
-
-TEST(FeatureToggleTest, FeatureEnabled) {
-    TEST_MACRO_ENABLED;
-    std::string input = "Test Data";
-    std::string expectedOutput = "Processed with Feature Enabled: Test Data";
-    EXPECT_EQ(expectedOutput, processData(input));
+    std::string output = oss.str();
+    ASSERT_EQ(output, expectedOutput) << "Expected: " << expectedOutput << "; Got: " << output;
 }
 
-TEST(FeatureToggleTest, FeatureDisabled) {
-    std::string input = "Test Data";
-    std::string expectedOutput = "Processed without Feature: Test Data";
-    EXPECT_EQ(expectedOutput, processData(input));
+TEST(FeatureTest, GCC_Compiler) {
+    TestWithCompilerMacro(true, false, "Running on GCC.\n");
+}
+
+TEST(FeatureTest, MSVC_Compiler) {
+    TestWithCompilerMacro(false, true, "Running on MSVC.\n");
+}
+
+TEST(FeatureTest, Unknown_Compiler) {
+    TestWithCompilerMacro(false, false, "Unknown compiler.\n");
 }
