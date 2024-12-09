@@ -1,20 +1,18 @@
+// test_my_template.cpp
+#include "my_template.h"
 #include <gtest/gtest.h>
-#include "template_class.hpp" // Ensure this path is correct
 
-// Basic tests for a template class
-TEST(TemplateClassTest, DefaultConstructor) {
-    TemplateClass<int> tc;
-    EXPECT_EQ(tc.value(), 0);
+TEST(MyTemplateTest, AddInt) {
+    MyTemplate<int> templateInstance;
+    EXPECT_EQ(templateInstance.add(1, 2), 3);
 }
 
-TEST(TemplateClassTest, SetValue) {
-    TemplateClass<int> tc;
-    tc.setValue(42);
-    EXPECT_EQ(tc.value(), 42);
+TEST(MyTemplateTest, AddDouble) {
+    MyTemplate<double> templateInstance;
+    EXPECT_DOUBLE_EQ(templateInstance.add(1.0, 2.0), 3.0);
 }
 
-// Add more tests as needed for other template types and functions
-
+// Main function to run all tests
 int main(int argc, char** argv) {
     ::testing::InitGoogleTest(&argc, argv);
     return RUN_ALL_TESTS();
